@@ -434,7 +434,8 @@ def cli_browse(ctx: click.Context, key: str | None) -> None:
 @click.pass_context
 def cli_rm(ctx: click.Context) -> None:
     """Remove a document from the documents list."""
-    click.echo("Sorry, TODO...")
+    click.echo("This command is not implemented.", err=True)
+    ctx.exit(1)
 
 
 @cli.command("ref")

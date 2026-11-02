@@ -258,15 +258,21 @@ def explorer(ctx: click.Context,
     known_exporters = get_available_exporters()
 
     if fmt not in known_exporters:
-        logger.error("Unknown export format '--format': '%s'.", fmt)
-        logger.error("Supported formats are: ['%s'].", "', '".join(known_exporters))
-        return
+        supported_formats = "', '".join(known_exporters)
+        raise click.UsageError(
+            f"Unknown export format '--format': '{fmt}'.\n"
+            f"Supported formats are: ['{supported_formats}'].",
+            ctx,
+        )
 
     docs = ctx.obj["documents"]
 
-    from papis.commands.export import run
+    from papis.commands.export import _run
 
-    outstring = run(docs, to_format=fmt)
+    outstring = _run(docs, to_format=fmt)
+    if outstring is None:
+        ctx.exit(1)
+
     if out is not None:
         with open(out, "a+", encoding="utf-8") as fd:
             logger.info(

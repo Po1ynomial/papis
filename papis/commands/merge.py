@@ -126,7 +126,9 @@ def run(keep: Document,
               help="Create the resulting document in this path.",
               default=None)
 @papis.cli.git_option(help="Merge in git.")
-def cli(query: str,
+@click.pass_context
+def cli(ctx: click.Context,
+        query: str,
         sort_field: str | None,
         out: str | None,
         second: bool,
@@ -161,7 +163,7 @@ def cli(query: str,
         logger.error(
             "You have to pick exactly two documents (picked %d)!",
             len(documents))
-        return
+        ctx.exit(1)
 
     a = documents[0]
     data_a = to_dict(a)

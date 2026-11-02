@@ -265,7 +265,9 @@ run = list_documents
 @papis.cli.all_option()
 @papis.cli.sort_option()
 @papis.cli.doc_folder_option()
-def cli(query: str,
+@click.pass_context
+def cli(ctx: click.Context,
+        query: str,
         show_info: bool,
         show_id: bool,
         show_files: bool,
@@ -304,6 +306,9 @@ def cli(query: str,
 
     if objects:
         return
+
+    if template is not None and not os.path.exists(template):
+        raise click.UsageError(f"Template file '{template}' not found.", ctx)
 
     documents = papis.cli.handle_doc_folder_query_all_sort(
         query, doc_folder, sort_field, sort_reverse, _all)

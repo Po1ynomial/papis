@@ -1011,6 +1011,18 @@ def cli(
             click.echo(o)
         return
 
+    # retrieve importers
+    known_importers = get_available_importers()
+    extra_importers = {name for name, _ in from_importer}.difference(known_importers)
+    if extra_importers:
+        unknown_importers = "', '".join(extra_importers)
+        supported_importers = "', '".join(known_importers)
+        raise click.UsageError(
+            f"Unknown importers chosen with '--from': ['{unknown_importers}'].\n"
+            f"Supported importers are: ['{supported_importers}'].",
+            ctx,
+        )
+
     # retrieve documents
     documents = papis.cli.handle_doc_folder_query_all_sort(
         query, doc_folder, sort_field, sort_reverse, _all
@@ -1018,16 +1030,6 @@ def cli(
     if not documents:
         from papis.strings import no_documents_retrieved_message
         logger.warning(no_documents_retrieved_message)
-        return
-
-    # retrieve importers
-    known_importers = get_available_importers()
-    extra_importers = {name for name, _ in from_importer}.difference(known_importers)
-    if extra_importers:
-        logger.error("Unknown importers chosen with '--from': ['%s'].",
-                     "', '".join(extra_importers))
-        logger.error("Supported importers are: ['%s'].", "', '".join(known_importers))
-        ctx.exit(1)
         return
 
     if from_importer:
