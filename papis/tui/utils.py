@@ -98,17 +98,44 @@ def text_area(text: str,
     from prompt_toolkit.widgets import Frame, TextArea
 
     papis_style = Style.from_dict(PAPIS_PYGMENTS_DEFAULT_STYLE)
-    print_container(
-        Frame(
-            TextArea(
-                text=text,
-                lexer=PygmentsLexer(pygment_lexer),  # type: ignore[arg-type]
-            ),
-            title=title,
+    container = Frame(
+        TextArea(
+            text=text,
+            lexer=PygmentsLexer(pygment_lexer),  # type: ignore[arg-type]
         ),
-        file=sys.stderr,
-        style=papis_style,
+        title=title,
     )
+
+    if sys.stderr.isatty():
+        print_container(container, file=sys.stderr, style=papis_style)
+    else:
+        # NOTE: on Windows, prompt_toolkit always renders to a Win32 console
+        # (using the stdout handle) when given a file, which fails for a
+        # redirected stderr. Use a plain output for non-terminal streams.
+        from prompt_toolkit.application import Application
+        from prompt_toolkit.input import DummyInput
+        from prompt_toolkit.layout import Layout
+        from prompt_toolkit.output.plain_text import PlainTextOutput
+        from prompt_toolkit.styles import (
+            default_pygments_style,
+            default_ui_style,
+            merge_styles,
+        )
+
+        app: Application[None] = Application(
+            layout=Layout(container=container),
+            output=PlainTextOutput(sys.stderr),
+            input=DummyInput(),
+            style=merge_styles([
+                default_ui_style(),
+                default_pygments_style(),
+                papis_style,
+            ]),
+        )
+        try:
+            app.run(in_thread=True)
+        except EOFError:
+            pass
 
 
 def yes_no_dialog(title: str, text: str) -> Any:
