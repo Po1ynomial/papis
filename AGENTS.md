@@ -36,9 +36,10 @@ For triage, follow the triage skill (`~/.pi/agent/skills/prod/triage/SKILL.md`) 
    `--no-track` keeps a plain `git push` away from upstream.
 3. Implement with tests using `papis.testing`. Use Conventional Commits. Do not edit `CHANGELOG.md`.
 4. Run the checks (see below), then `git push -u origin <branch>` and open a PR against `integration` whose body contains `Closes #N`. Write the body with the `pr` skill.
-5. Wait for CI with `gh pr checks --watch`.
+5. Wait for CI with `gh pr checks --watch` (about 5 minutes; the Windows jobs are the slowest). The `PyPI Release` job is skipped on the fork; that is expected.
    - All green: `gh pr merge --merge` (no `--delete-branch`; merged branches are kept for upstream). Remove the worktree with `git worktree remove`, `git pull` in the main checkout, and tick the issue in #8.
-   - Anything red: do not merge and do not work around it. Comment on the PR with what failed and report to the maintainer.
+   - Anything red, or no checks reported at all: do not merge and do not work around it. Comment on the PR with what happened and report to the maintainer.
+   - Never start, rerun or cancel workflows yourself (`gh workflow run`, `gh run rerun`, `gh run cancel`).
 
 ## Git rules
 
@@ -47,8 +48,9 @@ For triage, follow the triage skill (`~/.pi/agent/skills/prod/triage/SKILL.md`) 
 - Never rebase a branch after it was merged into `integration`, and never rebase `integration`. Follow-up fixes go in a new branch.
 - Keep branches independent. If one must stack on another, its PR targets the parent branch, and the parent merges first.
 - Bring in upstream changes by syncing `main`, then `git merge main` on `integration`.
-- Fork-only files (`AGENTS.md`, `docs/`, `.out-of-scope/`, `GLOSSARY.md`, `pyrightconfig.json`, `typings/`, the CI trigger for `integration`) are committed directly to `integration`, without an issue or PR.
+- Fork-only files (`AGENTS.md`, `docs/`, `.out-of-scope/`, `GLOSSARY.md`, `pyrightconfig.json`, `typings/`, and the fork tweaks in `.github/workflows/main.yml`) are committed directly to `integration`, without an issue or PR.
 - Never push to `upstream`, and never open issues or PRs on `papis/papis`.
+- Push branches only. Never push tags (`--tags`, `--follow-tags`); the local tags come from upstream.
 
 ## Dev environment and checks
 

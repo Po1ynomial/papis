@@ -92,6 +92,7 @@ jobs:
       shell: bash
 
   pypi-release:
+    if: github.repository == 'papis/papis'
     needs: [build]
     name: PyPI Release
     environment: pypi
