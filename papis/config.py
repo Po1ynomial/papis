@@ -102,14 +102,16 @@ class Configuration(configparser.ConfigParser):
                     f"The configuration is loaded from '{self.dir_location}'. A "
                     "deprecated configuration folder was found at "
                     f"'{deprecated_config}' and skipped. Please remove it to "
-                    "avoid seeing this warning in the future.")
+                    "avoid seeing this warning in the future.",
+                    err=True)
         else:
             if has_deprecated_config:
                 click.echo(
                     "A deprecated configuration folder was found at "
                     f"'{deprecated_config}' and has been copied to the new "
                     f"location '{self.dir_location}'. Please remove the deprecated "
-                    "folder to avoid seeing this warning in the future.")
+                    "folder to avoid seeing this warning in the future.",
+                    err=True)
 
                 import shutil
                 shutil.copytree(deprecated_config, self.dir_location)
@@ -124,9 +126,9 @@ class Configuration(configparser.ConfigParser):
                 self.handle_includes()
             except configparser.DuplicateOptionError as exc:
                 click.echo("Failed to read configuration file "
-                           f"'{self.file_location}'.")
+                           f"'{self.file_location}'.", err=True)
                 click.echo(f"Error: Duplicate option '{exc.option}' "
-                           f"in section {exc.section}")
+                           f"in section {exc.section}", err=True)
                 raise SystemExit(1) from None
 
         # if no sections were actually read, add default ones

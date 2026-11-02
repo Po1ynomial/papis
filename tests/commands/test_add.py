@@ -536,3 +536,18 @@ def test_add_cli_missing_library_interactive(
              "--set", "title", "Sidereus Nuncius"])
         assert result.exit_code == 1
         assert not os.path.exists(nonexistent_lib_no)
+
+
+def test_add_duplicate_batch_cli(tmp_library: TemporaryLibrary) -> None:
+    from papis.commands.add import cli
+    cli_runner = PapisRunner()
+
+    result = cli_runner.invoke(
+        cli,
+        ["--set", "doi", "10.1021/ct5004252",
+         "--set", "title", "The open society",
+         "--batch"])
+
+    assert result.exit_code == 0
+    assert not result.stdout
+    assert "This document is already in your library" in result.stderr

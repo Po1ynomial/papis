@@ -21,7 +21,7 @@ _RST_CONFVAL_REGEX = re.compile(r":confval:`(.*)`")
 
 def debug(msg: str, *args: Any) -> None:
     if "PAPIS_DEBUG" in os.environ:
-        click.echo(msg % args)
+        click.echo(msg % args, err=True)
 
 
 def make_short_help(text: str, fallback: str = "No help message available.") -> str:

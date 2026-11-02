@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from typing import TYPE_CHECKING, Any
 
 import click
@@ -105,6 +106,7 @@ def text_area(text: str,
             ),
             title=title,
         ),
+        file=sys.stderr,
         style=papis_style,
     )
 
