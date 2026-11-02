@@ -47,7 +47,7 @@ For triage, follow the triage skill (`~/.pi/agent/skills/prod/triage/SKILL.md`) 
 - Never rebase a branch after it was merged into `integration`, and never rebase `integration`. Follow-up fixes go in a new branch.
 - Keep branches independent. If one must stack on another, its PR targets the parent branch, and the parent merges first.
 - Bring in upstream changes by syncing `main`, then `git merge main` on `integration`.
-- Fork-only files (`AGENTS.md`, `docs/`, `.out-of-scope/`, `GLOSSARY.md`, the CI trigger for `integration`) are committed directly to `integration`, without an issue or PR.
+- Fork-only files (`AGENTS.md`, `docs/`, `.out-of-scope/`, `GLOSSARY.md`, `pyrightconfig.json`, `typings/`, the CI trigger for `integration`) are committed directly to `integration`, without an issue or PR.
 - Never push to `upstream`, and never open issues or PRs on `papis/papis`.
 
 ## Dev environment and checks
@@ -57,9 +57,14 @@ Set up once per worktree:
 ```bash
 uv venv
 uv pip install -e '.[develop,docs,optional]'
+cp ~/projects/_fork/papis/pyrightconfig.json .
+ln -s ~/projects/_fork/papis/typings typings
+basedpyright --writebaseline
 ```
 
-These match CI. With `develop` alone, pytest fails to import `papis/sphinx_ext.py` and mypy reports errors. Do not use `uv run` or `uv sync`; they create a `uv.lock`, which is not gitignored.
+The extras match CI. With `develop` alone, pytest fails to import `papis/sphinx_ext.py` and mypy reports errors. Do not use `uv run` or `uv sync`; they create a `uv.lock`, which is not gitignored.
+
+The last three lines set up basedpyright for the maintainer's editor: the config, stubs that make `dominate` untyped (as mypy treats it), and a baseline that hides existing errors so only new ones show. These files are listed in `.git/info/exclude` and must never be committed on a feature branch. basedpyright is not a check; mypy is the type checker of record. If old errors resurface after moving code, rerun `basedpyright --writebaseline`.
 
 Checks, matching CI, from the worktree root:
 
