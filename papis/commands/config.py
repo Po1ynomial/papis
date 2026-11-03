@@ -229,18 +229,30 @@ def run(
 @papis.cli.bool_flag(
     "--json", "print_json",
     help="Print settings in a JSON format.")
-def cli(options: list[str],
+@click.pass_context
+def cli(ctx: click.Context,
+        options: list[str],
         section: str | None,
         default: bool,
         print_json: bool) -> None:
     """Print configuration values."""
+    for option in options:
+        try:
+            parse_option(option, section)
+        except ValueError:
+            raise click.UsageError(
+                "Options should be in a <section>.<key> or <key> format: "
+                f"got '{option}'.", ctx) from None
+
     if len(options) == 1:
         # NOTE: a single option is printed directly for a bit of backwards
         # compatibility and easier use in shell scripts, so remove with care!
         _, value = _get_option_safe(options[0], section, default=default)
         if value is not None:
             click.echo(value)
-        return
+            return
+
+        ctx.exit(1)
 
     result = run(options, section=section, default=default)
     if not result:

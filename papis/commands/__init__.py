@@ -180,7 +180,6 @@ class CommandPluginLoaderGroup(click.Group):
         >>> cmd.name, cmd.help
         ('add', 'Add...')
         >>> group.get_command(None, 'this command does not exist')
-        Command ... is unknown!
         """
 
         # NOTE: allow using the standard `@group.command(name)` functionality
@@ -197,15 +196,12 @@ class CommandPluginLoaderGroup(click.Group):
                     name, self.command_plugin_names, n=2)
             ]
 
-            click.echo(f"Command '{name}' is unknown!")
             if len(matches) == 1:
-                # return the match if there was only one match
-                click.echo(f"I suppose you meant: '{matches[0]}'")
-                plugin = self.command_plugins[matches[0]]
+                ctx.fail(f"Command '{name}' is unknown! Did you mean '{matches[0]}'?")
             elif matches:
-                click.echo("Did you mean '{matches}'?"
-                           .format(matches="' or '".join(matches)))
-                return None
+                suggestions = "' or '".join(matches)
+                ctx.fail(
+                    f"Command '{name}' is unknown! Did you mean '{suggestions}'?")
             else:
                 return None
 

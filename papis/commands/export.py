@@ -71,13 +71,8 @@ if TYPE_CHECKING:
 logger = papis.logging.get_logger(__name__)
 
 
-def run(documents: list[Document], to_format: str) -> str:
-    """
-    Exports several documents into something else.
-
-    :param documents: A list of Papis documents
-    :param to_format: what format to use
-    """
+def _run(documents: list[Document], to_format: str) -> str | None:
+    """Export documents, returning ``None`` when the exporter fails."""
     from papis.exporters import get_exporter_by_name
     from papis.plugin import PluginError
 
@@ -86,14 +81,14 @@ def run(documents: list[Document], to_format: str) -> str:
     except PluginError as exc:
         logger.error("Could not load exporter for format '%s'.",
                      to_format, exc_info=exc)
-        return ""
+        return None
 
     try:
         result = exporter(documents)
     except Exception as exc:
         logger.error("Failed to export documents to format '%s'.",
                      to_format, exc_info=exc)
-        return ""
+        return None
 
     if not isinstance(result, str):
         logger.warning("Exporter for format '%s' did not return a string. This "
@@ -101,6 +96,16 @@ def run(documents: list[Document], to_format: str) -> str:
         result = str(result)
 
     return result
+
+
+def run(documents: list[Document], to_format: str) -> str:
+    """
+    Exports several documents into something else.
+
+    :param documents: A list of Papis documents
+    :param to_format: what format to use
+    """
+    return _run(documents, to_format) or ""
 
 
 @click.command("export")
@@ -134,7 +139,9 @@ def run(documents: list[Document], to_format: str) -> str:
     "-b",
     "--batch",
     help="Do not prompt when overwriting a file.")
-def cli(query: str,
+@click.pass_context
+def cli(ctx: click.Context,
+        query: str,
         doc_folder: tuple[str, ...],
         sort_field: str | None,
         sort_reverse: bool,
@@ -156,9 +163,12 @@ def cli(query: str,
     known_exporters = get_available_exporters()
 
     if fmt not in known_exporters:
-        logger.error("Unknown export format '--format': '%s'.", fmt)
-        logger.error("Supported formats are: ['%s'].", "', '".join(known_exporters))
-        return
+        supported_formats = "', '".join(known_exporters)
+        raise click.UsageError(
+            f"Unknown export format '--format': '{fmt}'.\n"
+            f"Supported formats are: ['{supported_formats}'].",
+            ctx,
+        )
 
     documents = papis.cli.handle_doc_folder_query_all_sort(query,
                                                            doc_folder,
@@ -179,7 +189,9 @@ def cli(query: str,
     for d in documents:
         d["_papis_local_folder"] = d.get_main_folder()
 
-    ret_string = run(documents, to_format=fmt)
+    ret_string = _run(documents, to_format=fmt)
+    if ret_string is None:
+        ctx.exit(1)
 
     if ret_string and not folder:
         if out is None:

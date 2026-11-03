@@ -278,7 +278,9 @@ def run(doc: Document,
 @papis.cli.doc_folder_option()
 @papis.cli.bool_flag("--all-checks", "all_checks",
                      help="Run all available checks (ignores --checks).")
-def cli(query: str,
+@click.pass_context
+def cli(ctx: click.Context,
+        query: str,
         doc_folder: tuple[str, ...],
         sort_field: str | None,
         sort_reverse: bool,
@@ -313,14 +315,18 @@ def cli(query: str,
         extra_checks = set(checks).difference(known_checks)
         if extra_checks:
             if _checks:
-                logger.error("Unknown checks chosen with '--check': ['%s'].",
-                             "', '".join(extra_checks))
-            else:
-                logger.error("Unknown checks found in the configuration file: ['%s'].",
-                             "', '".join(extra_checks))
+                unknown_checks = "', '".join(extra_checks)
+                supported_checks = "', '".join(known_checks)
+                raise click.UsageError(
+                    f"Unknown checks chosen with '--check': ['{unknown_checks}'].\n"
+                    f"Supported checks are: ['{supported_checks}'].",
+                    ctx,
+                )
 
+            logger.error("Unknown checks found in the configuration file: ['%s'].",
+                         "', '".join(extra_checks))
             logger.error("Supported checks are: ['%s'].", "', '".join(known_checks))
-            return
+            ctx.exit(1)
 
     documents = papis.cli.handle_doc_folder_query_all_sort(
         query, doc_folder, sort_field, sort_reverse, _all)

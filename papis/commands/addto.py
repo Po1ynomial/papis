@@ -43,11 +43,11 @@ if TYPE_CHECKING:
 logger = papis.logging.get_logger(__name__)
 
 
-def run(document: Document,
-        filepaths: list[str],
-        file_name: str | None = None,
-        link: bool = False,
-        git: bool = False) -> None:
+def _run(document: Document,
+         filepaths: list[str],
+         file_name: str | None = None,
+         link: bool = False,
+         git: bool = False) -> bool:
     from papis.document import describe
     from papis.exceptions import DocumentFolderNotFound
 
@@ -84,7 +84,7 @@ def run(document: Document,
 
     if not new_filepaths:
         logger.error("No valid files provided.")
-        return
+        return False
 
     # new_filenames is a list of renamed filenames. rename_document_files ensures
     # that here is no name collision even after renaming so we can be sure that
@@ -127,6 +127,17 @@ def run(document: Document,
         except GitError as exc:
             logger.error("%s", exc)
 
+    return True
+
+
+def run(document: Document,
+        filepaths: list[str],
+        file_name: str | None = None,
+        link: bool = False,
+        git: bool = False) -> None:
+    """Add files to a document."""
+    _run(document, filepaths, file_name=file_name, link=link, git=git)
+
 
 @click.command("addto")
 @click.help_option("--help", "-h")
@@ -148,7 +159,9 @@ def run(document: Document,
          "its original location.",
     default=False)
 @papis.cli.doc_folder_option()
-def cli(query: str,
+@click.pass_context
+def cli(ctx: click.Context,
+        query: str,
         git: bool,
         link: bool,
         files: list[str],
@@ -176,6 +189,11 @@ def cli(query: str,
     document = docs[0]
 
     try:
-        run(document, files + urls, file_name=file_name, git=git, link=link)
+        success = _run(document, files + urls,
+                       file_name=file_name, git=git, link=link)
     except Exception as exc:
         logger.error("Failed to add files.", exc_info=exc)
+        ctx.exit(1)
+
+    if not success:
+        ctx.exit(1)
