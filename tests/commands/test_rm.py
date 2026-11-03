@@ -164,3 +164,19 @@ def test_rm_files_cli(tmp_library: TemporaryLibrary,
 
     doc, = db.query_dict({"author": "krishnamurti"})
     assert bool(doc.get_files()) == (not confirm or not pick)
+
+
+def test_rm_preview_stderr(tmp_library: TemporaryLibrary,
+                           monkeypatch: MonkeyPatch) -> None:
+    import papis.tui.utils
+    from papis.commands.rm import cli
+    cli_runner = PapisRunner()
+
+    with monkeypatch.context() as m:
+        m.setattr(papis.tui.utils, "confirm", lambda *args, **kwargs: True)
+
+        result = cli_runner.invoke(cli, ["krishnamurti"])
+
+    assert result.exit_code == 0
+    assert not result.stdout
+    assert "This document will be removed" in result.stderr

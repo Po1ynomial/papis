@@ -61,3 +61,15 @@ def test_get_range() -> None:
 def test_select_range() -> None:
     from papis.tui.utils import select_range
     assert select_range([], "select") == []
+
+
+def test_text_area(capsys: pytest.CaptureFixture[str]) -> None:
+    import papis.tui.utils
+
+    papis.tui.utils.text_area(
+        "some document preview", title="A title", lexer_name="yaml")
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "A title" in captured.err
+    assert "some document preview" in captured.err

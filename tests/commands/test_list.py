@@ -4,8 +4,11 @@ import os
 from typing import TYPE_CHECKING
 
 import papis.database
+from papis.testing import PapisRunner
 
 if TYPE_CHECKING:
+    import pytest
+
     from papis.testing import TemporaryLibrary
 
 
@@ -33,3 +36,19 @@ def test_list_run(tmp_library: TemporaryLibrary) -> None:
 
     ids = list_documents(docs, show_id=True)
     assert len(ids) == len(docs)
+
+
+def test_list_debug_stdout(tmp_library: TemporaryLibrary,
+                           monkeypatch: pytest.MonkeyPatch) -> None:
+    from papis.commands.list import cli
+    cli_runner = PapisRunner()
+
+    with monkeypatch.context() as m:
+        m.setenv("PAPIS_DEBUG", "1")
+
+        result = cli_runner.invoke(cli, ["--all"])
+
+    assert result.exit_code == 0
+    lines = result.stdout.splitlines()
+    assert lines
+    assert all(os.path.isdir(line) for line in lines)
